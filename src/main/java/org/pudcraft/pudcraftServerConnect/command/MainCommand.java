@@ -52,8 +52,8 @@ public class MainCommand implements CommandExecutor, TabCompleter {
                     sender.sendMessage(msg.get("command.no-permission"));
                     return true;
                 }
-                configManager.reload();
-                sender.sendMessage(msg.get("config.reload-success"));
+                plugin.reload();
+                sender.sendMessage(configManager.getMessageManager().get("config.reload-success"));
             }
             case "status" -> {
                 if (!sender.hasPermission("pudcraft.status")) {

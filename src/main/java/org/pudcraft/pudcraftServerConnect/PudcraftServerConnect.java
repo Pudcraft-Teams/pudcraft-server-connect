@@ -12,17 +12,32 @@ import org.pudcraft.pudcraftServerConnect.whitelist.WhitelistManager;
 
 public final class PudcraftServerConnect extends JavaPlugin {
     private ConfigManager configManager;
-    private WhitelistManager whitelistManager;
     private SyncManager syncManager;
     private StatusReporter statusReporter;
 
     @Override
     public void onEnable() {
-        // 1. Config
         configManager = new ConfigManager(this);
         configManager.load();
+        startServices();
+    }
 
-        // 2. Check configuration
+    @Override
+    public void onDisable() {
+        shutdownServices();
+        getLogger().info("PudCraft Server Connect disabled");
+    }
+
+    /**
+     * Full reload: shutdown existing services, reload config, restart everything.
+     */
+    public void reload() {
+        shutdownServices();
+        configManager.reload();
+        startServices();
+    }
+
+    private void startServices() {
         if (!configManager.getPluginConfig().isConfigured()) {
             getLogger().warning(configManager.getMessageManager()
                 .getRaw("config.missing-api-config"));
@@ -31,43 +46,39 @@ public final class PudcraftServerConnect extends JavaPlugin {
             return;
         }
 
-        // 3. Network
+        // Network
         ApiClient apiClient = new ApiClient(configManager.getPluginConfig(), getLogger());
 
-        // 4. Whitelist
-        whitelistManager = new WhitelistManager(this, configManager);
+        // Whitelist
+        WhitelistManager whitelistManager = new WhitelistManager(this, configManager);
 
-        // 5. Sync
+        // Sync
         syncManager = new SyncManager(this, apiClient, whitelistManager, configManager);
         syncManager.start();
 
-        // 6. Status
+        // Status
         statusReporter = new StatusReporter(this, apiClient, configManager);
         statusReporter.start();
 
-        // 7. Verify
+        // Verify
         MotdVerifyManager verifyManager = new MotdVerifyManager(this, apiClient, configManager.getMessageManager());
 
-        // 8. Commands
+        // Commands
         registerCommand(new MainCommand(this, configManager, syncManager, whitelistManager, verifyManager));
 
         getLogger().info("PudCraft Server Connect enabled successfully");
     }
 
-    @Override
-    public void onDisable() {
-        // Report offline status
+    private void shutdownServices() {
         if (statusReporter != null) {
             statusReporter.reportOffline();
             statusReporter.shutdown();
+            statusReporter = null;
         }
-
-        // Shutdown sync and WebSocket
         if (syncManager != null) {
             syncManager.shutdown();
+            syncManager = null;
         }
-
-        getLogger().info("PudCraft Server Connect disabled");
     }
 
     private void registerCommand(MainCommand cmd) {
