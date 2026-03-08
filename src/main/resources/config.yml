@@ -1,0 +1,30 @@
+# PudCraft Server Connect Configuration
+
+# Community platform connection
+api:
+  server-id: ""
+  api-key: ""
+
+# WebSocket configuration
+websocket:
+  enabled: true
+  reconnect-delay-seconds: 5
+  max-reconnect-delay-seconds: 300
+
+# Whitelist mode: "native" (Bukkit whitelist) or "plugin" (plugin-managed)
+whitelist:
+  mode: "native"
+
+# Sync configuration
+sync:
+  poll-interval-seconds: 300
+  handshake-on-startup: true
+
+# Status reporting
+status:
+  report-interval-seconds: 60
+  report-tps: true
+  report-memory: true
+
+# Language: "zh_CN" or "en_US"
+language: "zh_CN"

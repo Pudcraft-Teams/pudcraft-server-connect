@@ -1,0 +1,42 @@
+prefix: "&7[&bPudCraft&7] &r"
+
+config:
+  reload-success: "&a配置已重载"
+  missing-api-config: "&c请先在 config.yml 中配置 api.server-id 和 api.api-key"
+
+whitelist:
+  not-whitelisted: "&c你不在白名单中，请在社区平台申请加入服务器"
+  added: "&a玩家 {player} 已加入白名单"
+  removed: "&e玩家 {player} 已从白名单移除"
+  list-header: "&6当前白名单 ({count} 人):"
+  list-entry: "&7- {player}"
+  list-empty: "&7白名单为空"
+
+sync:
+  handshake-success: "&a握手成功，已同步 {count} 个白名单条目"
+  handshake-failed: "&c握手失败: {reason}"
+  sync-success: "&a白名单同步操作完成"
+  sync-failed: "&c同步失败: {reason}"
+  manual-trigger: "&e正在手动触发白名单同步..."
+
+status:
+  header: "&6===== PudCraft 连接状态 ====="
+  api-connected: "&aAPI 连接正常"
+  api-disconnected: "&cAPI 连接异常"
+  ws-connected: "&aWebSocket 已连接"
+  ws-disconnected: "&cWebSocket 未连接"
+  ws-disabled: "&7WebSocket 已禁用"
+  whitelist-mode: "&7白名单模式: &f{mode}"
+  server-id: "&7服务器 ID: &f{id}"
+
+verify:
+  success: "&a服务器认领成功！"
+  failed: "&c服务器认领失败: {reason}"
+  already-claimed: "&c该服务器已被认领"
+
+command:
+  no-permission: "&c你没有权限执行此命令"
+  unknown-subcommand: "&c未知子命令，使用 /pudcraft 查看帮助"
+  usage: "&e用法: /pudcraft <reload|status|verify|sync|whitelist>"
+  player-only: "&c该命令只能在游戏内执行"
+  console-only: "&c该命令只能在控制台执行"

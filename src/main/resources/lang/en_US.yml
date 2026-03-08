@@ -1,0 +1,42 @@
+prefix: "&7[&bPudCraft&7] &r"
+
+config:
+  reload-success: "&aConfiguration reloaded"
+  missing-api-config: "&cPlease configure api.server-id and api.api-key in config.yml"
+
+whitelist:
+  not-whitelisted: "&cYou are not whitelisted. Please apply on the community platform."
+  added: "&aPlayer {player} has been added to the whitelist"
+  removed: "&ePlayer {player} has been removed from the whitelist"
+  list-header: "&6Current whitelist ({count} players):"
+  list-entry: "&7- {player}"
+  list-empty: "&7Whitelist is empty"
+
+sync:
+  handshake-success: "&aHandshake successful, synced {count} whitelist entries"
+  handshake-failed: "&cHandshake failed: {reason}"
+  sync-success: "&aWhitelist sync operation completed"
+  sync-failed: "&cSync failed: {reason}"
+  manual-trigger: "&eManually triggering whitelist sync..."
+
+status:
+  header: "&6===== PudCraft Connection Status ====="
+  api-connected: "&aAPI connection OK"
+  api-disconnected: "&cAPI connection failed"
+  ws-connected: "&aWebSocket connected"
+  ws-disconnected: "&cWebSocket disconnected"
+  ws-disabled: "&7WebSocket disabled"
+  whitelist-mode: "&7Whitelist mode: &f{mode}"
+  server-id: "&7Server ID: &f{id}"
+
+verify:
+  success: "&aServer claimed successfully!"
+  failed: "&cServer claim failed: {reason}"
+  already-claimed: "&cThis server has already been claimed"
+
+command:
+  no-permission: "&cYou do not have permission to execute this command"
+  unknown-subcommand: "&cUnknown subcommand. Use /pudcraft for help"
+  usage: "&eUsage: /pudcraft <reload|status|verify|sync|whitelist>"
+  player-only: "&cThis command can only be executed in-game"
+  console-only: "&cThis command can only be executed from console"

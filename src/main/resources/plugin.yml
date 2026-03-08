@@ -1,4 +1,37 @@
 name: pudcraft-server-connect
-version: '1.0-SNAPSHOT'
+version: '${version}'
 main: org.pudcraft.pudcraftServerConnect.PudcraftServerConnect
 api-version: '1.21'
+description: Connect your Minecraft server to PudCraft community platform
+
+commands:
+  pudcraft:
+    description: PudCraft Server Connect management command
+    usage: /<command> <reload|status|verify|sync|whitelist>
+    permission: pudcraft.admin
+
+permissions:
+  pudcraft.admin:
+    description: Parent permission for all PudCraft commands
+    default: op
+    children:
+      pudcraft.reload: true
+      pudcraft.status: true
+      pudcraft.verify: true
+      pudcraft.sync: true
+      pudcraft.whitelist: true
+  pudcraft.reload:
+    description: Reload plugin configuration
+    default: op
+  pudcraft.status:
+    description: View plugin connection status
+    default: op
+  pudcraft.verify:
+    description: Claim server ownership
+    default: op
+  pudcraft.sync:
+    description: Manually trigger whitelist sync
+    default: op
+  pudcraft.whitelist:
+    description: Manage whitelist
+    default: op
