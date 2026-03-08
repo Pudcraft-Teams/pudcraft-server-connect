@@ -42,6 +42,7 @@ update:
   download-success: "&a更新已下载，将在下次重启服务器时生效"
   download-failed: "&c下载更新失败: {reason}"
   check-failed: "&c检查更新失败: {reason}"
+  already-downloaded: "&e更新已下载，等待服务器重启后生效"
 
 command:
   no-permission: "&c你没有权限执行此命令"

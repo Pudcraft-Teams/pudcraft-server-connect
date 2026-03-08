@@ -8,6 +8,7 @@
 - **状态上报** — 定时向平台上报在线状态、玩家数、TPS、内存等信息
 - **服务器认领** — 通过 API Key 一键证明服务器归属
 - **双白名单模式** — 支持 Bukkit 原生白名单或插件自管理白名单
+- **自动更新** — 通过 GitHub Releases 自动检查并下载新版本，重启服务器即可生效
 - **多语言** — 中文 / 英文可切换
 
 ## 环境要求
@@ -18,10 +19,10 @@
 
 ## 安装
 
-1. 从 [Releases](https://github.com/pudcraft/pudcraft-server-connect/releases) 下载最新的 JAR 文件
+1. 从 [Releases](https://github.com/Pudcraft-Teams/pudcraft-server-connect/releases) 下载最新的 JAR 文件
 2. 放入服务器 `plugins/` 目录
 3. 启动服务器，插件会生成默认配置文件
-4. 编辑 `plugins/pudcraft-server-connect/config.yml`，填入 `server-id` 和 `api-key`
+4. 编辑 `plugins/pudcraft-server-connect/config.yml`，填入 `server-id` 和 `api-key`（目录名以 plugin.yml 中的 name 为准）
 5. 在游戏内执行 `/pudcraft reload`
 
 ## 配置
@@ -50,6 +51,10 @@ status:
   report-tps: true
   report-memory: true
 
+update:
+  enabled: true
+  check-interval-hours: 24
+
 language: "zh_CN"
 ```
 
@@ -69,13 +74,14 @@ language: "zh_CN"
 | `/pudcraft verify` | `pudcraft.verify` | 认领服务器 |
 | `/pudcraft sync` | `pudcraft.sync` | 手动触发白名单同步 |
 | `/pudcraft whitelist list` | `pudcraft.whitelist` | 查看白名单列表 |
+| `/pudcraft update` | `pudcraft.update` | 检查并下载插件更新 |
 
 所有权限默认仅 OP 可用。
 
 ## 从源码构建
 
 ```bash
-git clone https://github.com/pudcraft/pudcraft-server-connect.git
+git clone https://github.com/Pudcraft-Teams/pudcraft-server-connect.git
 cd pudcraft-server-connect
 ./gradlew build
 ```
