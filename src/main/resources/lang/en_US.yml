@@ -34,9 +34,18 @@ verify:
   failed: "&cServer claim failed: {reason}"
   already-claimed: "&cThis server has already been claimed"
 
+update:
+  checking: "&eChecking for updates..."
+  up-to-date: "&aPlugin is up to date (v{version})"
+  found: "&aNew version available: v{latest} (current: v{current})"
+  downloading: "&eDownloading update..."
+  download-success: "&aUpdate downloaded. It will be applied on next server restart."
+  download-failed: "&cUpdate download failed: {reason}"
+  check-failed: "&cUpdate check failed: {reason}"
+
 command:
   no-permission: "&cYou do not have permission to execute this command"
   unknown-subcommand: "&cUnknown subcommand. Use /pudcraft for help"
-  usage: "&eUsage: /pudcraft <reload|status|verify|sync|whitelist>"
+  usage: "&eUsage: /pudcraft <reload|status|verify|sync|whitelist|update>"
   player-only: "&cThis command can only be executed in-game"
   console-only: "&cThis command can only be executed from console"
