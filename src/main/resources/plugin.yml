@@ -1,0 +1,4 @@
+name: pudcraft-server-connect
+version: '1.0-SNAPSHOT'
+main: org.pudcraft.pudcraftServerConnect.PudcraftServerConnect
+api-version: '1.21'
