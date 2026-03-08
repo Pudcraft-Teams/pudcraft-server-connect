@@ -50,7 +50,11 @@ public class SyncManager {
         ApiResponse response = apiClient.post("/api/servers/{id}/sync/handshake", "{}");
 
         if (!response.isSuccess()) {
-            logger.warning("Handshake failed: " + response.getError());
+            if (response.getStatusCode() == 401) {
+                logger.warning("Handshake failed: API Key unauthorized. Please run /pudcraft verify to claim this server first.");
+            } else {
+                logger.warning("Handshake failed: " + response.getError());
+            }
             return;
         }
 

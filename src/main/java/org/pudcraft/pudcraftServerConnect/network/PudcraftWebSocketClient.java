@@ -49,6 +49,10 @@ public class PudcraftWebSocketClient extends WebSocketClient {
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
+        if (reason != null && reason.contains("401")) {
+            logger.warning("WebSocket authentication failed. Please run /pudcraft verify to claim this server first.");
+            return; // Don't reconnect on auth failure
+        }
         logger.info("WebSocket closed (code=" + code + ", reason=" + reason + ", remote=" + remote + ")");
         if (!intentionallyClosed) {
             scheduleReconnect();
