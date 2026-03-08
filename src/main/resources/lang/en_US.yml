@@ -42,6 +42,7 @@ update:
   download-success: "&aUpdate downloaded. It will be applied on next server restart."
   download-failed: "&cUpdate download failed: {reason}"
   check-failed: "&cUpdate check failed: {reason}"
+  already-downloaded: "&eUpdate already downloaded, waiting for server restart to apply"
 
 command:
   no-permission: "&cYou do not have permission to execute this command"

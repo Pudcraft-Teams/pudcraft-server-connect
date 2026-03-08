@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 public class UpdateChecker {
@@ -33,6 +34,7 @@ public class UpdateChecker {
     private final ConfigManager configManager;
     private final Logger logger;
     private final HttpClient httpClient;
+    private final AtomicBoolean checking = new AtomicBoolean(false);
     private BukkitRunnable checkTask;
 
     public UpdateChecker(PudcraftServerConnect plugin, ConfigManager configManager) {
@@ -77,6 +79,21 @@ public class UpdateChecker {
      * @param sender CommandSender to notify, or null for console-only logging.
      */
     public void checkAndDownload(CommandSender sender) {
+        if (!checking.compareAndSet(false, true)) {
+            if (sender != null) {
+                notify(sender, "update.check-failed", Map.of("reason", "Update check already in progress"));
+            }
+            return;
+        }
+
+        try {
+            doCheckAndDownload(sender);
+        } finally {
+            checking.set(false);
+        }
+    }
+
+    private void doCheckAndDownload(CommandSender sender) {
         String currentVersion = plugin.getDescription().getVersion();
 
         try {
@@ -89,6 +106,15 @@ public class UpdateChecker {
                 .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 403) {
+                String error = "GitHub API rate limit exceeded, please try again later";
+                logger.warning("Update check failed: " + error);
+                if (sender != null) {
+                    notify(sender, "update.check-failed", Map.of("reason", error));
+                }
+                return;
+            }
 
             if (response.statusCode() != 200) {
                 String error = "GitHub API returned " + response.statusCode();
@@ -127,7 +153,19 @@ public class UpdateChecker {
                 return;
             }
 
-            downloadUpdate(downloadUrl, sender);
+            // Check if update already downloaded
+            File pluginFile = getPluginFile();
+            File updateDir = new File(plugin.getDataFolder().getParentFile(), "update");
+            File targetFile = new File(updateDir, pluginFile.getName());
+            if (targetFile.exists()) {
+                logger.info("Update already downloaded, waiting for server restart to apply");
+                if (sender != null) {
+                    notify(sender, "update.already-downloaded");
+                }
+                return;
+            }
+
+            downloadUpdate(downloadUrl, pluginFile, sender);
 
         } catch (Exception e) {
             logger.warning("Update check failed: " + e.getMessage());
@@ -151,7 +189,7 @@ public class UpdateChecker {
         return null;
     }
 
-    private void downloadUpdate(String downloadUrl, CommandSender sender) {
+    private void downloadUpdate(String downloadUrl, File pluginFile, CommandSender sender) {
         try {
             if (sender != null) {
                 notify(sender, "update.downloading");
@@ -182,7 +220,6 @@ public class UpdateChecker {
             }
 
             // Save with same filename as current plugin JAR
-            File pluginFile = getPluginFile();
             Path targetPath = new File(updateDir, pluginFile.getName()).toPath();
 
             try (InputStream in = response.body()) {
@@ -209,9 +246,31 @@ public class UpdateChecker {
             method.setAccessible(true);
             return (File) method.invoke(plugin);
         } catch (Exception e) {
-            return new File(plugin.getDataFolder().getParentFile(),
-                plugin.getDescription().getName() + ".jar");
+            logger.warning("Failed to get plugin file via reflection, falling back to directory scan: " + e.getMessage());
+            return findPluginFileBySearch();
         }
+    }
+
+    private File findPluginFileBySearch() {
+        File pluginsDir = plugin.getDataFolder().getParentFile();
+        String pluginName = plugin.getDescription().getName().toLowerCase();
+
+        File[] jars = pluginsDir.listFiles((dir, name) ->
+            name.endsWith(".jar") && name.toLowerCase().contains(pluginName.toLowerCase()));
+
+        if (jars != null && jars.length == 1) {
+            return jars[0];
+        }
+
+        // Try matching by a broader pattern
+        if (jars != null && jars.length > 1) {
+            logger.warning("Multiple JARs matching plugin name found, using first match: " + jars[0].getName());
+            return jars[0];
+        }
+
+        // Last resort: use plugin name
+        logger.warning("Could not find plugin JAR in plugins directory, using fallback name");
+        return new File(pluginsDir, plugin.getDescription().getName() + ".jar");
     }
 
     /**
