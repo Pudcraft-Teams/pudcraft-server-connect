@@ -25,6 +25,7 @@ public class SyncManager {
     private final Logger logger;
     private PudcraftWebSocketClient wsClient;
     private SyncTask syncTask;
+    private String resolvedServerId; // CUID resolved from handshake
 
     public SyncManager(PudcraftServerConnect plugin, ApiClient apiClient,
                        WhitelistManager whitelistManager, ConfigManager configManager) {
