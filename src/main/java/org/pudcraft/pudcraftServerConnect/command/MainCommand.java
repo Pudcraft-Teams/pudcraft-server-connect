@@ -9,6 +9,7 @@ import org.pudcraft.pudcraftServerConnect.PudcraftServerConnect;
 import org.pudcraft.pudcraftServerConnect.config.ConfigManager;
 import org.pudcraft.pudcraftServerConnect.config.MessageManager;
 import org.pudcraft.pudcraftServerConnect.sync.SyncManager;
+import org.pudcraft.pudcraftServerConnect.update.UpdateChecker;
 import org.pudcraft.pudcraftServerConnect.verify.MotdVerifyManager;
 import org.pudcraft.pudcraftServerConnect.whitelist.WhitelistManager;
 
@@ -24,15 +25,17 @@ public class MainCommand implements CommandExecutor, TabCompleter {
     private final SyncManager syncManager;
     private final WhitelistManager whitelistManager;
     private final MotdVerifyManager verifyManager;
+    private final UpdateChecker updateChecker;
 
     public MainCommand(PudcraftServerConnect plugin, ConfigManager configManager,
                        SyncManager syncManager, WhitelistManager whitelistManager,
-                       MotdVerifyManager verifyManager) {
+                       MotdVerifyManager verifyManager, UpdateChecker updateChecker) {
         this.plugin = plugin;
         this.configManager = configManager;
         this.syncManager = syncManager;
         this.whitelistManager = whitelistManager;
         this.verifyManager = verifyManager;
+        this.updateChecker = updateChecker;
     }
 
     @Override
@@ -103,6 +106,14 @@ public class MainCommand implements CommandExecutor, TabCompleter {
                 }
                 handleWhitelist(sender, args, msg);
             }
+            case "update" -> {
+                if (!sender.hasPermission("pudcraft.update")) {
+                    sender.sendMessage(msg.get("command.no-permission"));
+                    return true;
+                }
+                sender.sendMessage(msg.get("update.checking"));
+                Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> updateChecker.checkAndDownload(sender));
+            }
             default -> sender.sendMessage(msg.get("command.unknown-subcommand"));
         }
 
@@ -143,7 +154,7 @@ public class MainCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 1) {
-            List<String> subs = Arrays.asList("reload", "status", "verify", "sync", "whitelist");
+            List<String> subs = Arrays.asList("reload", "status", "verify", "sync", "whitelist", "update");
             return subs.stream()
                 .filter(s -> s.startsWith(args[0].toLowerCase()))
                 .collect(Collectors.toList());

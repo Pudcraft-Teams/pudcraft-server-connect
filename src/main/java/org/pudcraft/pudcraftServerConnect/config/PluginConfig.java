@@ -25,6 +25,10 @@ public class PluginConfig {
     private boolean reportTps;
     private boolean reportMemory;
 
+    // Update
+    private boolean updateEnabled;
+    private int updateCheckIntervalHours;
+
     // Language
     private String language;
 
@@ -45,6 +49,9 @@ public class PluginConfig {
         this.reportIntervalSeconds = config.getInt("status.report-interval-seconds", 60);
         this.reportTps = config.getBoolean("status.report-tps", true);
         this.reportMemory = config.getBoolean("status.report-memory", true);
+
+        this.updateEnabled = config.getBoolean("update.enabled", true);
+        this.updateCheckIntervalHours = config.getInt("update.check-interval-hours", 24);
 
         this.language = config.getString("language", "zh_CN");
     }
@@ -67,5 +74,7 @@ public class PluginConfig {
     public int getReportIntervalSeconds() { return reportIntervalSeconds; }
     public boolean isReportTps() { return reportTps; }
     public boolean isReportMemory() { return reportMemory; }
+    public boolean isUpdateEnabled() { return updateEnabled; }
+    public int getUpdateCheckIntervalHours() { return updateCheckIntervalHours; }
     public String getLanguage() { return language; }
 }

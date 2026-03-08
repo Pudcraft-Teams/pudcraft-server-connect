@@ -7,7 +7,7 @@ description: Connect your Minecraft server to PudCraft community platform
 commands:
   pudcraft:
     description: PudCraft Server Connect management command
-    usage: /<command> <reload|status|verify|sync|whitelist>
+    usage: /<command> <reload|status|verify|sync|whitelist|update>
     permission: pudcraft.admin
 
 permissions:
@@ -20,6 +20,7 @@ permissions:
       pudcraft.verify: true
       pudcraft.sync: true
       pudcraft.whitelist: true
+      pudcraft.update: true
   pudcraft.reload:
     description: Reload plugin configuration
     default: op
@@ -34,4 +35,7 @@ permissions:
     default: op
   pudcraft.whitelist:
     description: Manage whitelist
+    default: op
+  pudcraft.update:
+    description: Check and download plugin updates
     default: op

@@ -27,5 +27,10 @@ status:
   report-tps: true
   report-memory: true
 
+# Auto update
+update:
+  enabled: true
+  check-interval-hours: 24
+
 # Language: "zh_CN" or "en_US"
 language: "zh_CN"

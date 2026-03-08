@@ -34,9 +34,18 @@ verify:
   failed: "&c服务器认领失败: {reason}"
   already-claimed: "&c该服务器已被认领"
 
+update:
+  checking: "&e正在检查更新..."
+  up-to-date: "&a插件已是最新版本 (v{version})"
+  found: "&a发现新版本: v{latest} (当前: v{current})"
+  downloading: "&e正在下载更新..."
+  download-success: "&a更新已下载，将在下次重启服务器时生效"
+  download-failed: "&c下载更新失败: {reason}"
+  check-failed: "&c检查更新失败: {reason}"
+
 command:
   no-permission: "&c你没有权限执行此命令"
   unknown-subcommand: "&c未知子命令，使用 /pudcraft 查看帮助"
-  usage: "&e用法: /pudcraft <reload|status|verify|sync|whitelist>"
+  usage: "&e用法: /pudcraft <reload|status|verify|sync|whitelist|update>"
   player-only: "&c该命令只能在游戏内执行"
   console-only: "&c该命令只能在控制台执行"

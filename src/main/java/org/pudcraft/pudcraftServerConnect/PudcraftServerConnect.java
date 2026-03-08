@@ -7,6 +7,7 @@ import org.pudcraft.pudcraftServerConnect.config.ConfigManager;
 import org.pudcraft.pudcraftServerConnect.network.ApiClient;
 import org.pudcraft.pudcraftServerConnect.status.StatusReporter;
 import org.pudcraft.pudcraftServerConnect.sync.SyncManager;
+import org.pudcraft.pudcraftServerConnect.update.UpdateChecker;
 import org.pudcraft.pudcraftServerConnect.verify.MotdVerifyManager;
 import org.pudcraft.pudcraftServerConnect.whitelist.WhitelistManager;
 
@@ -14,6 +15,7 @@ public final class PudcraftServerConnect extends JavaPlugin {
     private ConfigManager configManager;
     private SyncManager syncManager;
     private StatusReporter statusReporter;
+    private UpdateChecker updateChecker;
 
     @Override
     public void onEnable() {
@@ -38,11 +40,15 @@ public final class PudcraftServerConnect extends JavaPlugin {
     }
 
     private void startServices() {
+        // Update checker (works regardless of API config)
+        updateChecker = new UpdateChecker(this, configManager);
+        updateChecker.start();
+
         if (!configManager.getPluginConfig().isConfigured()) {
             getLogger().warning(configManager.getMessageManager()
                 .getRaw("config.missing-api-config"));
             getLogger().warning("Plugin will not connect until configured. Edit config.yml and run /pudcraft reload");
-            registerCommand(new MainCommand(this, configManager, null, null, null));
+            registerCommand(new MainCommand(this, configManager, null, null, null, updateChecker));
             return;
         }
 
@@ -64,12 +70,16 @@ public final class PudcraftServerConnect extends JavaPlugin {
         MotdVerifyManager verifyManager = new MotdVerifyManager(this, apiClient, configManager.getMessageManager());
 
         // Commands
-        registerCommand(new MainCommand(this, configManager, syncManager, whitelistManager, verifyManager));
+        registerCommand(new MainCommand(this, configManager, syncManager, whitelistManager, verifyManager, updateChecker));
 
         getLogger().info("PudCraft Server Connect enabled successfully");
     }
 
     private void shutdownServices() {
+        if (updateChecker != null) {
+            updateChecker.shutdown();
+            updateChecker = null;
+        }
         if (statusReporter != null) {
             statusReporter.reportOffline();
             statusReporter.shutdown();
