@@ -2,6 +2,8 @@
 
 # Community platform connection
 api:
+  # Development: "http://localhost:3000"  Production: "https://servers.pudcraft.top"
+  base-url: "http://localhost:3000"
   server-id: ""
   api-key: ""
 

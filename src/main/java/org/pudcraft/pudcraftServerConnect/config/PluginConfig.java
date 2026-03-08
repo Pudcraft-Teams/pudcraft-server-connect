@@ -4,6 +4,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 public class PluginConfig {
     // API
+    private String baseUrl;
     private String serverId;
     private String apiKey;
 
@@ -28,6 +29,7 @@ public class PluginConfig {
     private String language;
 
     public void load(FileConfiguration config) {
+        this.baseUrl = config.getString("api.base-url", "https://servers.pudcraft.top");
         this.serverId = config.getString("api.server-id", "");
         this.apiKey = config.getString("api.api-key", "");
 
@@ -53,6 +55,7 @@ public class PluginConfig {
     }
 
     // Getters for all fields
+    public String getBaseUrl() { return baseUrl; }
     public String getServerId() { return serverId; }
     public String getApiKey() { return apiKey; }
     public boolean isWebsocketEnabled() { return websocketEnabled; }

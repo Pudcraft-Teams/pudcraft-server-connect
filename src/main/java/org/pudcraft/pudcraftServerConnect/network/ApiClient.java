@@ -10,13 +10,14 @@ import java.time.Duration;
 import java.util.logging.Logger;
 
 public class ApiClient {
-    private static final String BASE_URL = "https://servers.pudcraft.top";
     private final HttpClient httpClient;
+    private final String baseUrl;
     private final String serverId;
     private final String apiKey;
     private final Logger logger;
 
     public ApiClient(PluginConfig config, Logger logger) {
+        this.baseUrl = config.getBaseUrl();
         this.serverId = config.getServerId();
         this.apiKey = config.getApiKey();
         this.logger = logger;
@@ -39,7 +40,7 @@ public class ApiClient {
 
     private ApiResponse request(String method, String path, String jsonBody) {
         try {
-            String url = BASE_URL + path.replace("{id}", serverId);
+            String url = baseUrl + path.replace("{id}", serverId);
 
             HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(url))
