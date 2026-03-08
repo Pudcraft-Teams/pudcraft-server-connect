@@ -1,5 +1,6 @@
 package org.pudcraft.pudcraftServerConnect;
 
+import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.pudcraft.pudcraftServerConnect.command.MainCommand;
 import org.pudcraft.pudcraftServerConnect.config.ConfigManager;
@@ -11,11 +12,9 @@ import org.pudcraft.pudcraftServerConnect.whitelist.WhitelistManager;
 
 public final class PudcraftServerConnect extends JavaPlugin {
     private ConfigManager configManager;
-    private ApiClient apiClient;
     private WhitelistManager whitelistManager;
     private SyncManager syncManager;
     private StatusReporter statusReporter;
-    private MotdVerifyManager verifyManager;
 
     @Override
     public void onEnable() {
@@ -28,12 +27,12 @@ public final class PudcraftServerConnect extends JavaPlugin {
             getLogger().warning(configManager.getMessageManager()
                 .getRaw("config.missing-api-config"));
             getLogger().warning("Plugin will not connect until configured. Edit config.yml and run /pudcraft reload");
-            registerCommandsOnly();
+            registerCommand(new MainCommand(this, configManager, null, null, null));
             return;
         }
 
         // 3. Network
-        apiClient = new ApiClient(configManager.getPluginConfig(), getLogger());
+        ApiClient apiClient = new ApiClient(configManager.getPluginConfig(), getLogger());
 
         // 4. Whitelist
         whitelistManager = new WhitelistManager(this, configManager);
@@ -47,10 +46,10 @@ public final class PudcraftServerConnect extends JavaPlugin {
         statusReporter.start();
 
         // 7. Verify
-        verifyManager = new MotdVerifyManager(this, apiClient, configManager.getMessageManager());
+        MotdVerifyManager verifyManager = new MotdVerifyManager(this, apiClient, configManager.getMessageManager());
 
         // 8. Commands
-        registerCommands();
+        registerCommand(new MainCommand(this, configManager, syncManager, whitelistManager, verifyManager));
 
         getLogger().info("PudCraft Server Connect enabled successfully");
     }
@@ -71,17 +70,11 @@ public final class PudcraftServerConnect extends JavaPlugin {
         getLogger().info("PudCraft Server Connect disabled");
     }
 
-    private void registerCommands() {
-        MainCommand cmd = new MainCommand(this, configManager, syncManager,
-            whitelistManager, verifyManager);
-        getCommand("pudcraft").setExecutor(cmd);
-        getCommand("pudcraft").setTabCompleter(cmd);
-    }
-
-    private void registerCommandsOnly() {
-        // Register commands that work without API connection (reload only)
-        MainCommand cmd = new MainCommand(this, configManager, null, null, null);
-        getCommand("pudcraft").setExecutor(cmd);
-        getCommand("pudcraft").setTabCompleter(cmd);
+    private void registerCommand(MainCommand cmd) {
+        PluginCommand command = getCommand("pudcraft");
+        if (command != null) {
+            command.setExecutor(cmd);
+            command.setTabCompleter(cmd);
+        }
     }
 }
