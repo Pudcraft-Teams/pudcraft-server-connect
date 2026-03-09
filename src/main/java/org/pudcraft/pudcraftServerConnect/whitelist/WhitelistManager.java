@@ -45,8 +45,8 @@ public class WhitelistManager {
      * Only supported in plugin mode.
      */
     public void setWhitelist(List<String> players) {
-        if (provider instanceof PluginWhitelistProvider pluginProvider) {
-            pluginProvider.setWhitelist(players);
+        if (provider instanceof PluginWhitelistProvider) {
+            ((PluginWhitelistProvider) provider).setWhitelist(players);
         } else {
             // In native mode, add missing players and remove extras
             List<String> current = provider.getWhitelistedPlayers();

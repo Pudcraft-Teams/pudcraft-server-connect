@@ -50,15 +50,15 @@ public class MainCommand implements CommandExecutor, TabCompleter {
         String sub = args[0].toLowerCase();
 
         switch (sub) {
-            case "reload" -> {
+            case "reload":
                 if (!sender.hasPermission("pudcraft.reload")) {
                     sender.sendMessage(msg.get("command.no-permission"));
                     return true;
                 }
                 plugin.reload();
                 sender.sendMessage(configManager.getMessageManager().get("config.reload-success"));
-            }
-            case "status" -> {
+                break;
+            case "status":
                 if (!sender.hasPermission("pudcraft.status")) {
                     sender.sendMessage(msg.get("command.no-permission"));
                     return true;
@@ -68,8 +68,8 @@ public class MainCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 showStatus(sender, msg);
-            }
-            case "verify" -> {
+                break;
+            case "verify":
                 if (!sender.hasPermission("pudcraft.verify")) {
                     sender.sendMessage(msg.get("command.no-permission"));
                     return true;
@@ -82,8 +82,8 @@ public class MainCommand implements CommandExecutor, TabCompleter {
                     String result = verifyManager.claim();
                     Bukkit.getScheduler().runTask(plugin, () -> sender.sendMessage(result));
                 });
-            }
-            case "sync" -> {
+                break;
+            case "sync":
                 if (!sender.hasPermission("pudcraft.sync")) {
                     sender.sendMessage(msg.get("command.no-permission"));
                     return true;
@@ -94,8 +94,8 @@ public class MainCommand implements CommandExecutor, TabCompleter {
                 }
                 sender.sendMessage(msg.get("sync.manual-trigger"));
                 Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> syncManager.pollPending());
-            }
-            case "whitelist" -> {
+                break;
+            case "whitelist":
                 if (!sender.hasPermission("pudcraft.whitelist")) {
                     sender.sendMessage(msg.get("command.no-permission"));
                     return true;
@@ -105,16 +105,18 @@ public class MainCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 handleWhitelist(sender, args, msg);
-            }
-            case "update" -> {
+                break;
+            case "update":
                 if (!sender.hasPermission("pudcraft.update")) {
                     sender.sendMessage(msg.get("command.no-permission"));
                     return true;
                 }
                 sender.sendMessage(msg.get("update.checking"));
                 Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> updateChecker.checkAndDownload(sender));
-            }
-            default -> sender.sendMessage(msg.get("command.unknown-subcommand"));
+                break;
+            default:
+                sender.sendMessage(msg.get("command.unknown-subcommand"));
+                break;
         }
 
         return true;

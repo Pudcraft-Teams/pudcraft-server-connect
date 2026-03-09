@@ -1,7 +1,7 @@
 name: pudcraft-server-connect
 version: '${version}'
 main: org.pudcraft.pudcraftServerConnect.PudcraftServerConnect
-api-version: '1.21'
+api-version: '${apiVersion}'
 description: Connect your Minecraft server to PudCraft community platform
 
 commands:

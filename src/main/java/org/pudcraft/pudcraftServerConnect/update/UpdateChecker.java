@@ -179,14 +179,35 @@ public class UpdateChecker {
         JsonArray assets = release.getAsJsonArray("assets");
         if (assets == null) return null;
 
+        String suffix = getTargetJavaSuffix();
+        String fallbackUrl = null;
+
         for (JsonElement element : assets) {
             JsonObject asset = element.getAsJsonObject();
             String name = asset.get("name").getAsString();
-            if (name.endsWith(".jar")) {
+            if (!name.endsWith(".jar")) continue;
+
+            // Match variant for current Java version (e.g. "-java17.jar")
+            if (name.contains("-" + suffix + ".")) {
+                logger.info("Selected update variant: " + name + " (runtime: Java " + Runtime.version().feature() + ")");
                 return asset.get("browser_download_url").getAsString();
             }
+            if (fallbackUrl == null) {
+                fallbackUrl = asset.get("browser_download_url").getAsString();
+            }
         }
-        return null;
+
+        if (fallbackUrl != null) {
+            logger.info("No variant-specific JAR found for " + suffix + ", using fallback");
+        }
+        return fallbackUrl;
+    }
+
+    private String getTargetJavaSuffix() {
+        int version = Runtime.version().feature();
+        if (version >= 21) return "java21";
+        if (version >= 17) return "java17";
+        return "java11";
     }
 
     private void downloadUpdate(String downloadUrl, File pluginFile, CommandSender sender) {
