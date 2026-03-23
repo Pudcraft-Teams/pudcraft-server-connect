@@ -33,7 +33,7 @@ public class PluginConfig {
     private String language;
 
     public void load(FileConfiguration config) {
-        this.baseUrl = config.getString("api.base-url", "https://servers.pudcraft.top");
+        this.baseUrl = config.getString("api.base-url", "https://community.pudcraft.top");
         this.serverId = config.getString("api.server-id", "");
         this.apiKey = config.getString("api.api-key", "");
 

@@ -12,7 +12,7 @@
 
 ## API Contracts Reference
 
-**Base URL:** `https://servers.pudcraft.top` (hardcoded)
+**Base URL:** `https://community.pudcraft.top` (hardcoded)
 
 **Auth:** All API calls use `Authorization: Bearer <api_key>` header.
 
@@ -28,7 +28,7 @@
 
 ### WebSocket
 
-- URL: `wss://servers.pudcraft.top/ws?serverId={id}&token={apiKey}` (or ws:// based on wsUrl from handshake)
+- URL: `wss://community.pudcraft.top/ws?serverId={id}&token={apiKey}` (or ws:// based on wsUrl from handshake)
 - Auth via query params, 30s heartbeat ping/pong
 - Messages: JSON from Redis pub/sub channel `whitelist:change`, contains `{ serverId }`
 
@@ -594,7 +594,7 @@ import java.time.Duration;
 import java.util.logging.Logger;
 
 public class ApiClient {
-    private static final String BASE_URL = "https://servers.pudcraft.top";
+    private static final String BASE_URL = "https://community.pudcraft.top";
     private final HttpClient httpClient;
     private final String serverId;
     private final String apiKey;
