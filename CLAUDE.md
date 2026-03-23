@@ -69,7 +69,7 @@ ConfigManager → ApiClient → WhitelistManager → SyncManager
 
 ## 对接的社区平台 API
 
-**Base URL**: 配置在 `config.yml` 的 `api.base-url`，开发默认 `http://localhost:3000`，生产改为 `https://servers.pudcraft.top`。
+**Base URL**: 配置在 `config.yml` 的 `api.base-url`，开发默认 `http://localhost:3000`，生产改为 `https://community.pudcraft.top`。
 
 | 方法 | 路径 | 用途 |
 |------|------|------|

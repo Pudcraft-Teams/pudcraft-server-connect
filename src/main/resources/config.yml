@@ -2,7 +2,7 @@
 
 # Community platform connection
 api:
-  base-url: "https://servers.pudcraft.top"
+  base-url: "https://community.pudcraft.top"
   server-id: ""
   api-key: ""
 

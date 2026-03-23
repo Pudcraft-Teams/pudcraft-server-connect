@@ -1,6 +1,6 @@
 # PudCraft Server Connect
 
-将你的 Minecraft 服务器连接到 [PudCraft 社区平台](https://servers.pudcraft.top)，实现白名单自动同步、服务器状态上报和一键认领。
+将你的 Minecraft 服务器连接到 [PudCraft 社区平台](https://community.pudcraft.top)，实现白名单自动同步、服务器状态上报和一键认领。
 
 ## 功能
 
@@ -45,7 +45,7 @@
 
 ```yaml
 api:
-  base-url: "https://servers.pudcraft.top"
+  base-url: "https://community.pudcraft.top"
   server-id: "你的服务器 ID"
   api-key: "你的 API Key"
 
@@ -76,7 +76,7 @@ language: "zh_CN"
 
 ### 获取 API Key
 
-1. 在 [PudCraft 社区平台](https://servers.pudcraft.top) 提交并认领你的服务器
+1. 在 [PudCraft 社区平台](https://community.pudcraft.top) 提交并认领你的服务器
 2. 进入服务器管理页面，生成 API Key
 3. 将 API Key 和服务器 ID 填入 `config.yml`
 
