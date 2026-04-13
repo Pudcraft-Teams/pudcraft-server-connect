@@ -16,6 +16,10 @@ import org.pudcraft.pudcraftServerConnect.whitelist.WhitelistManager;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -144,6 +148,36 @@ class PudcraftServerConnectTest {
         offlineFuture.complete(new ApiResponse(200, "{}"));
 
         verify(configManager).reload();
+    }
+
+    @Test
+    void onDisableWaitsForOfflineReportToFinish() throws Exception {
+        PudcraftServerConnect plugin = mock(PudcraftServerConnect.class, withSettings().defaultAnswer(org.mockito.Answers.CALLS_REAL_METHODS));
+        StatusReporter statusReporter = mock(StatusReporter.class);
+        CompletableFuture<ApiResponse> offlineFuture = new CompletableFuture<>();
+
+        doReturn(Logger.getLogger("test")).when(plugin).getLogger();
+        when(statusReporter.reportOffline()).thenReturn(offlineFuture);
+
+        setField(plugin, "updateChecker", mock(UpdateChecker.class));
+        setField(plugin, "statusReporter", statusReporter);
+        setField(plugin, "syncManager", mock(SyncManager.class));
+        setField(plugin, "whitelistManager", mock(WhitelistManager.class));
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            Future<?> disableTask = executor.submit(plugin::onDisable);
+
+            Thread.sleep(100);
+            assertFalse(disableTask.isDone(), "onDisable should wait for offline report completion");
+
+            offlineFuture.complete(new ApiResponse(200, "{}"));
+
+            disableTask.get(1, TimeUnit.SECONDS);
+            assertTrue(disableTask.isDone(), "onDisable should finish after offline report completes");
+        } finally {
+            executor.shutdownNow();
+        }
     }
 
     private static void invokeShutdownServices(PudcraftServerConnect plugin) throws Exception {

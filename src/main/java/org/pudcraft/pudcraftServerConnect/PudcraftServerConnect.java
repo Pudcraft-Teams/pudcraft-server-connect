@@ -12,8 +12,10 @@ import org.pudcraft.pudcraftServerConnect.verify.MotdVerifyManager;
 import org.pudcraft.pudcraftServerConnect.whitelist.WhitelistManager;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 public final class PudcraftServerConnect extends JavaPlugin {
+    private static final long SHUTDOWN_REPORT_TIMEOUT_SECONDS = 16;
     private ConfigManager configManager;
     private SyncManager syncManager;
     private WhitelistManager whitelistManager;
@@ -30,7 +32,7 @@ public final class PudcraftServerConnect extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        shutdownServices();
+        awaitShutdownCompletion(shutdownServices());
         getLogger().info("PudCraft Server Connect disabled");
     }
 
@@ -131,6 +133,17 @@ public final class PudcraftServerConnect extends JavaPlugin {
     private synchronized void clearReloadInFlight(CompletableFuture<Void> reloadFuture) {
         if (reloadInFlight == reloadFuture) {
             reloadInFlight = null;
+        }
+    }
+
+    private void awaitShutdownCompletion(CompletableFuture<Void> shutdownFuture) {
+        try {
+            shutdownFuture.get(SHUTDOWN_REPORT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            getLogger().warning("Interrupted while waiting for offline status report during shutdown");
+        } catch (Exception e) {
+            getLogger().warning("Offline status report did not finish before shutdown: " + e.getMessage());
         }
     }
 
