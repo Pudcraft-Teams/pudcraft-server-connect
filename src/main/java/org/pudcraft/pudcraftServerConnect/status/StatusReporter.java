@@ -9,6 +9,7 @@ import org.pudcraft.pudcraftServerConnect.config.ConfigManager;
 import org.pudcraft.pudcraftServerConnect.network.ApiClient;
 import org.pudcraft.pudcraftServerConnect.network.ApiResponse;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
 
 public class StatusReporter {
@@ -32,11 +33,14 @@ public class StatusReporter {
             .runTaskTimer(plugin, () -> report(true), 100L, intervalTicks); // 5s initial delay
     }
 
-    public void report(boolean online) {
+    public CompletableFuture<ApiResponse> report(boolean online) {
         String jsonBody = buildStatusPayload(online);
         logger.info("Status report body: " + jsonBody);
-        apiClient.postAsync("/api/servers/{id}/status/report", jsonBody)
-            .thenAccept(this::logIfFailed);
+        return apiClient.postAsync("/api/servers/{id}/status/report", jsonBody)
+            .thenApply(response -> {
+                logIfFailed(response);
+                return response;
+            });
     }
 
     private String buildStatusPayload(boolean online) {
@@ -72,8 +76,8 @@ public class StatusReporter {
         }
     }
 
-    public void reportOffline() {
-        report(false);
+    public CompletableFuture<ApiResponse> reportOffline() {
+        return report(false);
     }
 
     public void shutdown() {

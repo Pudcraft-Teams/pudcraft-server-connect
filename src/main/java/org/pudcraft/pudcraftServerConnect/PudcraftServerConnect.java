@@ -11,6 +11,8 @@ import org.pudcraft.pudcraftServerConnect.update.UpdateChecker;
 import org.pudcraft.pudcraftServerConnect.verify.MotdVerifyManager;
 import org.pudcraft.pudcraftServerConnect.whitelist.WhitelistManager;
 
+import java.util.concurrent.CompletableFuture;
+
 public final class PudcraftServerConnect extends JavaPlugin {
     private ConfigManager configManager;
     private SyncManager syncManager;
@@ -34,10 +36,12 @@ public final class PudcraftServerConnect extends JavaPlugin {
     /**
      * Full reload: shutdown existing services, reload config, restart everything.
      */
-    public void reload() {
-        shutdownServices();
-        configManager.reload();
-        startServices();
+    public CompletableFuture<Void> reload() {
+        return shutdownServices()
+            .thenCompose(ignored -> runOnMainThread(() -> {
+                configManager.reload();
+                startServices();
+            }));
     }
 
     private void startServices() {
@@ -76,13 +80,15 @@ public final class PudcraftServerConnect extends JavaPlugin {
         getLogger().info("PudCraft Server Connect enabled successfully");
     }
 
-    private void shutdownServices() {
+    private CompletableFuture<Void> shutdownServices() {
+        CompletableFuture<Void> offlineReport = CompletableFuture.completedFuture(null);
         if (updateChecker != null) {
             updateChecker.shutdown();
             updateChecker = null;
         }
         if (statusReporter != null) {
-            statusReporter.reportOffline();
+            offlineReport = statusReporter.reportOffline()
+                .handle((response, error) -> null);
             statusReporter.shutdown();
             statusReporter = null;
         }
@@ -94,6 +100,20 @@ public final class PudcraftServerConnect extends JavaPlugin {
             whitelistManager.shutdown();
             whitelistManager = null;
         }
+        return offlineReport;
+    }
+
+    private CompletableFuture<Void> runOnMainThread(Runnable task) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        getServer().getScheduler().runTask(this, () -> {
+            try {
+                task.run();
+                future.complete(null);
+            } catch (Throwable throwable) {
+                future.completeExceptionally(throwable);
+            }
+        });
+        return future;
     }
 
     private void registerCommand(MainCommand cmd) {
