@@ -40,6 +40,10 @@ public class WhitelistManager {
         return provider.getWhitelistedPlayers();
     }
 
+    public void shutdown() {
+        provider.shutdown();
+    }
+
     /**
      * Full whitelist replacement (used during handshake).
      * Only supported in plugin mode.

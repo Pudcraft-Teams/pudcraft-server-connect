@@ -2,6 +2,7 @@ prefix: "&7[&bPudCraft&7] &r"
 
 config:
   reload-success: "&a配置已重载"
+  reload-failed: "&c配置重载失败: {reason}"
   missing-api-config: "&c请先在 config.yml 中配置 api.server-id 和 api.api-key"
 
 whitelist:

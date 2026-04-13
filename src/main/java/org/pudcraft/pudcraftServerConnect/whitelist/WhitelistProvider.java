@@ -7,4 +7,7 @@ public interface WhitelistProvider {
     boolean removePlayer(String username);
     boolean isWhitelisted(String username);
     List<String> getWhitelistedPlayers();
+
+    default void shutdown() {
+    }
 }

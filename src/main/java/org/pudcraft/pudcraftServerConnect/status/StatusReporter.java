@@ -2,12 +2,14 @@ package org.pudcraft.pudcraftServerConnect.status;
 
 import com.google.gson.JsonObject;
 import org.bukkit.Bukkit;
-import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.Server;
+import org.bukkit.scheduler.BukkitTask;
 import org.pudcraft.pudcraftServerConnect.PudcraftServerConnect;
 import org.pudcraft.pudcraftServerConnect.config.ConfigManager;
 import org.pudcraft.pudcraftServerConnect.network.ApiClient;
 import org.pudcraft.pudcraftServerConnect.network.ApiResponse;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
 
 public class StatusReporter {
@@ -15,7 +17,7 @@ public class StatusReporter {
     private final ApiClient apiClient;
     private final ConfigManager configManager;
     private final Logger logger;
-    private BukkitRunnable reportTask;
+    private BukkitTask reportTask;
 
     public StatusReporter(PudcraftServerConnect plugin, ApiClient apiClient,
                           ConfigManager configManager) {
@@ -27,21 +29,27 @@ public class StatusReporter {
 
     public void start() {
         int intervalTicks = configManager.getPluginConfig().getReportIntervalSeconds() * 20;
-        reportTask = new BukkitRunnable() {
-            @Override
-            public void run() {
-                report(true);
-            }
-        };
-        reportTask.runTaskTimerAsynchronously(plugin, 100L, intervalTicks); // 5s initial delay
+        reportTask = plugin.getServer().getScheduler()
+            .runTaskTimer(plugin, () -> report(true), 100L, intervalTicks); // 5s initial delay
     }
 
-    public void report(boolean online) {
+    public CompletableFuture<ApiResponse> report(boolean online) {
+        String jsonBody = buildStatusPayload(online);
+        logger.info("Status report body: " + jsonBody);
+        return apiClient.postAsync("/api/servers/{id}/status/report", jsonBody)
+            .thenApply(response -> {
+                logIfFailed(response);
+                return response;
+            });
+    }
+
+    private String buildStatusPayload(boolean online) {
+        Server server = plugin.getServer();
         JsonObject body = new JsonObject();
         body.addProperty("online", online);
-        body.addProperty("playerCount", Bukkit.getOnlinePlayers().size());
-        body.addProperty("maxPlayers", Bukkit.getMaxPlayers());
-        body.addProperty("version", Bukkit.getVersion());
+        body.addProperty("playerCount", server.getOnlinePlayers().size());
+        body.addProperty("maxPlayers", server.getMaxPlayers());
+        body.addProperty("version", server.getVersion());
 
         if (configManager.getPluginConfig().isReportTps()) {
             try {
@@ -59,14 +67,17 @@ public class StatusReporter {
             body.addProperty("memoryMax", runtime.maxMemory());
         }
 
-        ApiResponse response = apiClient.post("/api/servers/{id}/status/report", body.toString());
+        return body.toString();
+    }
+
+    private void logIfFailed(ApiResponse response) {
         if (!response.isSuccess()) {
-            logger.warning("Status report failed: " + response.getError());
+            logger.warning("Status report failed (HTTP " + response.getStatusCode() + "): " + response.getBody());
         }
     }
 
-    public void reportOffline() {
-        report(false);
+    public CompletableFuture<ApiResponse> reportOffline() {
+        return report(false);
     }
 
     public void shutdown() {

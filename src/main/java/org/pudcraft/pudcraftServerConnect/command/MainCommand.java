@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
 public class MainCommand implements CommandExecutor, TabCompleter {
@@ -55,8 +56,17 @@ public class MainCommand implements CommandExecutor, TabCompleter {
                     sender.sendMessage(msg.get("command.no-permission"));
                     return true;
                 }
-                plugin.reload();
-                sender.sendMessage(configManager.getMessageManager().get("config.reload-success"));
+                plugin.reload().whenComplete((ignored, error) ->
+                    plugin.getServer().getScheduler().runTask(plugin, () -> {
+                        if (error == null) {
+                            sender.sendMessage(configManager.getMessageManager().get("config.reload-success"));
+                        } else {
+                            sender.sendMessage(configManager.getMessageManager().get(
+                                "config.reload-failed",
+                                Map.of("reason", reloadFailureReason(error))
+                            ));
+                        }
+                    }));
                 break;
             case "status":
                 if (!sender.hasPermission("pudcraft.status")) {
@@ -151,6 +161,23 @@ public class MainCommand implements CommandExecutor, TabCompleter {
                 }
             }
         }
+    }
+
+    private Throwable unwrapCompletionError(Throwable error) {
+        if (error instanceof CompletionException && error.getCause() != null) {
+            return error.getCause();
+        }
+        return error;
+    }
+
+    private String reloadFailureReason(Throwable error) {
+        Throwable cause = unwrapCompletionError(error);
+        String message = cause.getMessage();
+        if (message != null && !message.isBlank()) {
+            return message;
+        }
+        String simpleName = cause.getClass().getSimpleName();
+        return simpleName.isEmpty() ? cause.getClass().getName() : simpleName;
     }
 
     @Override

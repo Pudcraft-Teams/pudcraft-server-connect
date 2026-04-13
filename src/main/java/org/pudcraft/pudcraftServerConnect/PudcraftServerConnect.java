@@ -11,11 +11,17 @@ import org.pudcraft.pudcraftServerConnect.update.UpdateChecker;
 import org.pudcraft.pudcraftServerConnect.verify.MotdVerifyManager;
 import org.pudcraft.pudcraftServerConnect.whitelist.WhitelistManager;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
 public final class PudcraftServerConnect extends JavaPlugin {
+    private static final long SHUTDOWN_REPORT_TIMEOUT_SECONDS = 16;
     private ConfigManager configManager;
     private SyncManager syncManager;
+    private WhitelistManager whitelistManager;
     private StatusReporter statusReporter;
     private UpdateChecker updateChecker;
+    private CompletableFuture<Void> reloadInFlight;
 
     @Override
     public void onEnable() {
@@ -26,17 +32,26 @@ public final class PudcraftServerConnect extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        shutdownServices();
+        awaitShutdownCompletion(shutdownServices());
         getLogger().info("PudCraft Server Connect disabled");
     }
 
     /**
      * Full reload: shutdown existing services, reload config, restart everything.
      */
-    public void reload() {
-        shutdownServices();
-        configManager.reload();
-        startServices();
+    public synchronized CompletableFuture<Void> reload() {
+        if (reloadInFlight != null && !reloadInFlight.isDone()) {
+            return reloadInFlight;
+        }
+
+        CompletableFuture<Void> reloadFuture = shutdownServices()
+            .thenCompose(ignored -> runOnMainThread(() -> {
+                configManager.reload();
+                startServices();
+            }));
+        reloadInFlight = reloadFuture;
+        reloadFuture.whenComplete((ignored, error) -> clearReloadInFlight(reloadFuture));
+        return reloadFuture;
     }
 
     private void startServices() {
@@ -56,7 +71,7 @@ public final class PudcraftServerConnect extends JavaPlugin {
         ApiClient apiClient = new ApiClient(configManager.getPluginConfig(), getLogger());
 
         // Whitelist
-        WhitelistManager whitelistManager = new WhitelistManager(this, configManager);
+        whitelistManager = new WhitelistManager(this, configManager);
 
         // Sync
         syncManager = new SyncManager(this, apiClient, whitelistManager, configManager);
@@ -75,19 +90,60 @@ public final class PudcraftServerConnect extends JavaPlugin {
         getLogger().info("PudCraft Server Connect enabled successfully");
     }
 
-    private void shutdownServices() {
+    private CompletableFuture<Void> shutdownServices() {
+        CompletableFuture<Void> offlineReport = CompletableFuture.completedFuture(null);
         if (updateChecker != null) {
             updateChecker.shutdown();
             updateChecker = null;
         }
         if (statusReporter != null) {
-            statusReporter.reportOffline();
+            offlineReport = statusReporter.reportOffline()
+                .handle((response, error) -> null);
             statusReporter.shutdown();
             statusReporter = null;
         }
         if (syncManager != null) {
             syncManager.shutdown();
             syncManager = null;
+        }
+        if (whitelistManager != null) {
+            whitelistManager.shutdown();
+            whitelistManager = null;
+        }
+        return offlineReport;
+    }
+
+    private CompletableFuture<Void> runOnMainThread(Runnable task) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        try {
+            getServer().getScheduler().runTask(this, () -> {
+                try {
+                    task.run();
+                    future.complete(null);
+                } catch (Throwable throwable) {
+                    future.completeExceptionally(throwable);
+                }
+            });
+        } catch (Throwable throwable) {
+            future.completeExceptionally(throwable);
+        }
+        return future;
+    }
+
+    private synchronized void clearReloadInFlight(CompletableFuture<Void> reloadFuture) {
+        if (reloadInFlight == reloadFuture) {
+            reloadInFlight = null;
+        }
+    }
+
+    private void awaitShutdownCompletion(CompletableFuture<Void> shutdownFuture) {
+        try {
+            shutdownFuture.get(SHUTDOWN_REPORT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            getLogger().warning("Interrupted while waiting for offline status report during shutdown");
+        } catch (Exception e) {
+            getLogger().warning("Offline status report did not finish before shutdown: " + e.getMessage());
         }
     }
 

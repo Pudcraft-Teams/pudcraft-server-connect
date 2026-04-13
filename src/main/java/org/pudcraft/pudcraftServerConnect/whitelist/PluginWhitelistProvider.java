@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.pudcraft.pudcraftServerConnect.PudcraftServerConnect;
@@ -69,6 +70,11 @@ public class PluginWhitelistProvider implements WhitelistProvider, Listener {
     @Override
     public List<String> getWhitelistedPlayers() {
         return new ArrayList<>(whitelist);
+    }
+
+    @Override
+    public void shutdown() {
+        HandlerList.unregisterAll(this);
     }
 
     public void setWhitelist(List<String> players) {

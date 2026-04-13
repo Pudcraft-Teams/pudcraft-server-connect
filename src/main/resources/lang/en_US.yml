@@ -2,6 +2,7 @@ prefix: "&7[&bPudCraft&7] &r"
 
 config:
   reload-success: "&aConfiguration reloaded"
+  reload-failed: "&cReload failed: {reason}"
   missing-api-config: "&cPlease configure api.server-id and api.api-key in config.yml"
 
 whitelist:
