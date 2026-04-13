@@ -63,7 +63,7 @@ public class MainCommand implements CommandExecutor, TabCompleter {
                         } else {
                             sender.sendMessage(configManager.getMessageManager().get(
                                 "config.reload-failed",
-                                Map.of("reason", unwrapCompletionError(error).getMessage())
+                                Map.of("reason", reloadFailureReason(error))
                             ));
                         }
                     }));
@@ -168,6 +168,16 @@ public class MainCommand implements CommandExecutor, TabCompleter {
             return error.getCause();
         }
         return error;
+    }
+
+    private String reloadFailureReason(Throwable error) {
+        Throwable cause = unwrapCompletionError(error);
+        String message = cause.getMessage();
+        if (message != null && !message.isBlank()) {
+            return message;
+        }
+        String simpleName = cause.getClass().getSimpleName();
+        return simpleName.isEmpty() ? cause.getClass().getName() : simpleName;
     }
 
     @Override
