@@ -92,18 +92,20 @@ public class SyncManager {
     public void processSync(String syncId, String username, String action) {
         // Execute whitelist operation on main thread
         Bukkit.getScheduler().runTask(plugin, () -> {
-            boolean success;
+            boolean desiredStateReached;
             if ("add".equals(action)) {
-                success = whitelistManager.addPlayer(username);
+                whitelistManager.addPlayer(username);
+                desiredStateReached = whitelistManager.isWhitelisted(username);
             } else if ("remove".equals(action)) {
-                success = whitelistManager.removePlayer(username);
+                whitelistManager.removePlayer(username);
+                desiredStateReached = !whitelistManager.isWhitelisted(username);
             } else {
                 logger.warning("Unknown sync action: " + action);
                 return;
             }
 
-            // ACK async
-            if (success) {
+            // ACK async only when the requested end state is already satisfied.
+            if (desiredStateReached) {
                 Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> ack(syncId));
             }
         });

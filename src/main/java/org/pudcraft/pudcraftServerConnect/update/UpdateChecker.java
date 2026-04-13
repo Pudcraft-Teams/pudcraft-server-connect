@@ -20,6 +20,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.Map;
@@ -242,9 +243,15 @@ public class UpdateChecker {
 
             // Save with same filename as current plugin JAR
             Path targetPath = new File(updateDir, pluginFile.getName()).toPath();
+            Path tempPath = Files.createTempFile(updateDir.toPath(), pluginFile.getName(), ".part");
 
-            try (InputStream in = response.body()) {
-                Files.copy(in, targetPath, StandardCopyOption.REPLACE_EXISTING);
+            try {
+                try (InputStream in = response.body()) {
+                    Files.copy(in, tempPath, StandardCopyOption.REPLACE_EXISTING);
+                }
+                moveDownloadedFile(tempPath, targetPath);
+            } finally {
+                Files.deleteIfExists(tempPath);
             }
 
             logger.info("Update downloaded to " + targetPath + ". It will be applied on next server restart.");
@@ -257,6 +264,14 @@ public class UpdateChecker {
             if (sender != null) {
                 notify(sender, "update.download-failed", Map.of("reason", e.getMessage()));
             }
+        }
+    }
+
+    private void moveDownloadedFile(Path tempPath, Path targetPath) throws Exception {
+        try {
+            Files.move(tempPath, targetPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException e) {
+            Files.move(tempPath, targetPath, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 

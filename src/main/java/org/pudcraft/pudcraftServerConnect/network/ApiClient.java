@@ -7,6 +7,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
 
 public class ApiClient {
@@ -35,36 +36,72 @@ public class ApiClient {
         return request("POST", path, jsonBody);
     }
 
+    public CompletableFuture<ApiResponse> postAsync(String path, String jsonBody) {
+        return requestAsync("POST", path, jsonBody);
+    }
+
     public ApiResponse postEmpty(String path) {
         return request("POST", path, "{}");
     }
 
+    public CompletableFuture<ApiResponse> postEmptyAsync(String path) {
+        return requestAsync("POST", path, "{}");
+    }
+
     private ApiResponse request(String method, String path, String jsonBody) {
         try {
-            String url = baseUrl + path.replace("{id}", serverId);
-
-            HttpRequest.Builder builder = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("Authorization", "Bearer " + apiKey)
-                .header("Content-Type", "application/json")
-                .timeout(Duration.ofSeconds(15));
-
-            if ("GET".equals(method)) {
-                builder.GET();
-            } else if ("POST".equals(method) && jsonBody != null) {
-                builder.POST(HttpRequest.BodyPublishers.ofString(jsonBody));
-            } else {
-                builder.method(method, HttpRequest.BodyPublishers.noBody());
-            }
-
             HttpResponse<String> response = httpClient.send(
-                builder.build(), HttpResponse.BodyHandlers.ofString());
+                buildRequest(method, path, jsonBody), HttpResponse.BodyHandlers.ofString());
 
             return new ApiResponse(response.statusCode(), response.body());
         } catch (Exception e) {
             logger.warning("API request failed: " + method + " " + path + " - " + e.getMessage());
-            return new ApiResponse(-1, "{\"error\":\"" + e.getMessage() + "\"}");
+            return errorResponse(e);
         }
+    }
+
+    private CompletableFuture<ApiResponse> requestAsync(String method, String path, String jsonBody) {
+        try {
+            return httpClient.sendAsync(buildRequest(method, path, jsonBody), HttpResponse.BodyHandlers.ofString())
+                .thenApply(response -> new ApiResponse(response.statusCode(), response.body()))
+                .exceptionally(error -> {
+                    Throwable cause = error.getCause() != null ? error.getCause() : error;
+                    logger.warning("API request failed: " + method + " " + path + " - " + cause.getMessage());
+                    return errorResponse(cause);
+                });
+        } catch (Exception e) {
+            logger.warning("API request failed: " + method + " " + path + " - " + e.getMessage());
+            return CompletableFuture.completedFuture(errorResponse(e));
+        }
+    }
+
+    private HttpRequest buildRequest(String method, String path, String jsonBody) {
+        String url = baseUrl + path.replace("{id}", serverId);
+
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .header("Authorization", "Bearer " + apiKey)
+            .header("Content-Type", "application/json")
+            .timeout(Duration.ofSeconds(15));
+
+        if ("GET".equals(method)) {
+            builder.GET();
+        } else if ("POST".equals(method) && jsonBody != null) {
+            builder.POST(HttpRequest.BodyPublishers.ofString(jsonBody));
+        } else {
+            builder.method(method, HttpRequest.BodyPublishers.noBody());
+        }
+
+        return builder.build();
+    }
+
+    private ApiResponse errorResponse(Throwable error) {
+        String message = error.getMessage() != null ? error.getMessage() : error.getClass().getSimpleName();
+        return new ApiResponse(-1, "{\"error\":\"" + escapeJson(message) + "\"}");
+    }
+
+    private String escapeJson(String value) {
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     public String getServerId() { return serverId; }

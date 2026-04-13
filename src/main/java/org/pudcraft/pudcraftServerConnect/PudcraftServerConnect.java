@@ -14,6 +14,7 @@ import org.pudcraft.pudcraftServerConnect.whitelist.WhitelistManager;
 public final class PudcraftServerConnect extends JavaPlugin {
     private ConfigManager configManager;
     private SyncManager syncManager;
+    private WhitelistManager whitelistManager;
     private StatusReporter statusReporter;
     private UpdateChecker updateChecker;
 
@@ -56,7 +57,7 @@ public final class PudcraftServerConnect extends JavaPlugin {
         ApiClient apiClient = new ApiClient(configManager.getPluginConfig(), getLogger());
 
         // Whitelist
-        WhitelistManager whitelistManager = new WhitelistManager(this, configManager);
+        whitelistManager = new WhitelistManager(this, configManager);
 
         // Sync
         syncManager = new SyncManager(this, apiClient, whitelistManager, configManager);
@@ -88,6 +89,10 @@ public final class PudcraftServerConnect extends JavaPlugin {
         if (syncManager != null) {
             syncManager.shutdown();
             syncManager = null;
+        }
+        if (whitelistManager != null) {
+            whitelistManager.shutdown();
+            whitelistManager = null;
         }
     }
 
