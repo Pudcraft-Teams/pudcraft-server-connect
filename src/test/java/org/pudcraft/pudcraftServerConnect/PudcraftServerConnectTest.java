@@ -19,6 +19,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -96,6 +97,53 @@ class PudcraftServerConnectTest {
 
         verify(configManager).reload();
         assertTrue(reloadFuture.isDone(), "reload should complete after offline report finishes");
+    }
+
+    @Test
+    void concurrentReloadReturnsSameInFlightFutureAndRestartsOnce() throws Exception {
+        PudcraftServerConnect plugin = mock(PudcraftServerConnect.class, withSettings().defaultAnswer(org.mockito.Answers.CALLS_REAL_METHODS));
+        ConfigManager configManager = mock(ConfigManager.class);
+        PluginConfig pluginConfig = mock(PluginConfig.class);
+        MessageManager messageManager = mock(MessageManager.class);
+        StatusReporter statusReporter = mock(StatusReporter.class);
+        UpdateChecker updateChecker = mock(UpdateChecker.class);
+        SyncManager syncManager = mock(SyncManager.class);
+        WhitelistManager whitelistManager = mock(WhitelistManager.class);
+        Server server = mock(Server.class);
+        BukkitScheduler scheduler = mock(BukkitScheduler.class);
+        CompletableFuture<ApiResponse> offlineFuture = new CompletableFuture<>();
+
+        doReturn(Logger.getLogger("test")).when(plugin).getLogger();
+        doReturn(server).when(plugin).getServer();
+        when(server.getScheduler()).thenReturn(scheduler);
+        when(scheduler.runTask(eq(plugin), any(Runnable.class))).thenAnswer(invocation -> {
+            Runnable runnable = invocation.getArgument(1);
+            runnable.run();
+            return null;
+        });
+        doReturn((PluginCommand) null).when(plugin).getCommand("pudcraft");
+        when(configManager.getPluginConfig()).thenReturn(pluginConfig);
+        when(configManager.getMessageManager()).thenReturn(messageManager);
+        when(pluginConfig.isUpdateEnabled()).thenReturn(false);
+        when(pluginConfig.isConfigured()).thenReturn(false);
+        when(messageManager.getRaw(any())).thenReturn("msg");
+        when(statusReporter.reportOffline()).thenReturn(offlineFuture);
+
+        setField(plugin, "configManager", configManager);
+        setField(plugin, "updateChecker", updateChecker);
+        setField(plugin, "statusReporter", statusReporter);
+        setField(plugin, "syncManager", syncManager);
+        setField(plugin, "whitelistManager", whitelistManager);
+
+        CompletableFuture<Void> firstReload = plugin.reload();
+        CompletableFuture<Void> secondReload = plugin.reload();
+
+        assertSame(firstReload, secondReload, "concurrent reload should reuse the in-flight future");
+        verify(configManager, never()).reload();
+
+        offlineFuture.complete(new ApiResponse(200, "{}"));
+
+        verify(configManager).reload();
     }
 
     private static void invokeShutdownServices(PudcraftServerConnect plugin) throws Exception {

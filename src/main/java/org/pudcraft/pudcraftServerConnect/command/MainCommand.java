@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
 public class MainCommand implements CommandExecutor, TabCompleter {
@@ -56,8 +57,16 @@ public class MainCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 plugin.reload().whenComplete((ignored, error) ->
-                    Bukkit.getScheduler().runTask(plugin, () ->
-                        sender.sendMessage(configManager.getMessageManager().get("config.reload-success"))));
+                    plugin.getServer().getScheduler().runTask(plugin, () -> {
+                        if (error == null) {
+                            sender.sendMessage(configManager.getMessageManager().get("config.reload-success"));
+                        } else {
+                            sender.sendMessage(configManager.getMessageManager().get(
+                                "config.reload-failed",
+                                Map.of("reason", unwrapCompletionError(error).getMessage())
+                            ));
+                        }
+                    }));
                 break;
             case "status":
                 if (!sender.hasPermission("pudcraft.status")) {
@@ -152,6 +161,13 @@ public class MainCommand implements CommandExecutor, TabCompleter {
                 }
             }
         }
+    }
+
+    private Throwable unwrapCompletionError(Throwable error) {
+        if (error instanceof CompletionException && error.getCause() != null) {
+            return error.getCause();
+        }
+        return error;
     }
 
     @Override

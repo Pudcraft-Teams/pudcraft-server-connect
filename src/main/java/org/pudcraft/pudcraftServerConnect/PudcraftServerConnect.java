@@ -19,6 +19,7 @@ public final class PudcraftServerConnect extends JavaPlugin {
     private WhitelistManager whitelistManager;
     private StatusReporter statusReporter;
     private UpdateChecker updateChecker;
+    private CompletableFuture<Void> reloadInFlight;
 
     @Override
     public void onEnable() {
@@ -36,12 +37,19 @@ public final class PudcraftServerConnect extends JavaPlugin {
     /**
      * Full reload: shutdown existing services, reload config, restart everything.
      */
-    public CompletableFuture<Void> reload() {
-        return shutdownServices()
+    public synchronized CompletableFuture<Void> reload() {
+        if (reloadInFlight != null && !reloadInFlight.isDone()) {
+            return reloadInFlight;
+        }
+
+        CompletableFuture<Void> reloadFuture = shutdownServices()
             .thenCompose(ignored -> runOnMainThread(() -> {
                 configManager.reload();
                 startServices();
             }));
+        reloadInFlight = reloadFuture;
+        reloadFuture.whenComplete((ignored, error) -> clearReloadInFlight(reloadFuture));
+        return reloadFuture;
     }
 
     private void startServices() {
@@ -105,15 +113,25 @@ public final class PudcraftServerConnect extends JavaPlugin {
 
     private CompletableFuture<Void> runOnMainThread(Runnable task) {
         CompletableFuture<Void> future = new CompletableFuture<>();
-        getServer().getScheduler().runTask(this, () -> {
-            try {
-                task.run();
-                future.complete(null);
-            } catch (Throwable throwable) {
-                future.completeExceptionally(throwable);
-            }
-        });
+        try {
+            getServer().getScheduler().runTask(this, () -> {
+                try {
+                    task.run();
+                    future.complete(null);
+                } catch (Throwable throwable) {
+                    future.completeExceptionally(throwable);
+                }
+            });
+        } catch (Throwable throwable) {
+            future.completeExceptionally(throwable);
+        }
         return future;
+    }
+
+    private synchronized void clearReloadInFlight(CompletableFuture<Void> reloadFuture) {
+        if (reloadInFlight == reloadFuture) {
+            reloadInFlight = null;
+        }
     }
 
     private void registerCommand(MainCommand cmd) {
